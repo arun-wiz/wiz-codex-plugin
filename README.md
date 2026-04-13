@@ -78,22 +78,21 @@ Authentication behavior:
 
 If you use service-account auth on macOS and usually launch VS Code from the Dock, make the Wiz variables available to the GUI login session before starting Codex.
 
-1. Store the secrets in the macOS keychain:
-
-```bash
-security add-generic-password -a "$USER" -s codex-wiz-client-id -w '<YOUR_WIZ_CLIENT_ID>' -U
-security add-generic-password -a "$USER" -s codex-wiz-client-secret -w '<YOUR_WIZ_CLIENT_SECRET>' -U
-```
-
-2. Load them into `launchd`:
+1. Run the helper and enter the values when prompted:
 
 ```bash
 zsh ~/.codex/load-wiz-mcp-env.zsh
 ```
 
-3. Fully quit VS Code and reopen it.
+It will prompt for:
 
-4. Start a fresh Codex session and optionally verify with:
+- `Wiz Client ID`
+- `Wiz Client Secret`
+- `Wiz Datacenter` with default `us36`
+
+2. Fully quit VS Code and reopen it.
+
+3. Start a fresh Codex session and optionally verify with:
 
 ```bash
 codex mcp list
