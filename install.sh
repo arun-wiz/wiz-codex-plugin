@@ -4,10 +4,12 @@ set -euo pipefail
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 plugin_src="${repo_root}/plugin"
 skill_src="${repo_root}/skill/wiz-security"
+wiz_env_helper_src="${repo_root}/scripts/load-wiz-mcp-env.zsh"
 
 plugin_dst="${HOME}/plugins/wiz-security"
 skill_dst="${HOME}/.codex/skills/wiz-security"
 codex_config="${HOME}/.codex/config.toml"
+wiz_env_helper_dst="${HOME}/.codex/load-wiz-mcp-env.zsh"
 marketplace_dir="${HOME}/.agents/plugins"
 marketplace_file="${marketplace_dir}/marketplace.json"
 mcp_url="${WIZ_MCP_URL:-https://mcp.app.wiz.io}"
@@ -21,10 +23,12 @@ mkdir -p "${HOME}/plugins" "${HOME}/.codex/skills" "${HOME}/.codex" "${marketpla
 
 rsync -a "${plugin_src}/" "${plugin_dst}/"
 rsync -a "${skill_src}/" "${skill_dst}/"
+install -m 0755 "${wiz_env_helper_src}" "${wiz_env_helper_dst}"
 
 chmod +x \
   "${plugin_dst}/scripts/wiz_scan_fetch.sh" \
-  "${skill_dst}/scripts/wiz_scan_fetch.sh"
+  "${skill_dst}/scripts/wiz_scan_fetch.sh" \
+  "${wiz_env_helper_dst}"
 
 python3 - "$marketplace_file" <<'PY'
 import json
@@ -139,6 +143,9 @@ Marketplace:
 Codex MCP config:
   ${codex_config}
 
+macOS GUI env helper:
+  ${wiz_env_helper_dst}
+
 Wiz MCP URL:
   ${mcp_url}
 
@@ -146,10 +153,12 @@ MCP auth mode:
   ${mcp_auth_mode}
 
 Next steps:
-1. If you are using service-account auth, make sure WIZ_CLIENT_ID, WIZ_CLIENT_SECRET, and WIZ_DATACENTER are available before starting Codex
-2. Fully quit VS Code
-3. Reopen VS Code
-4. Start a brand new Codex session
-5. Optional: run codex mcp list to verify the Wiz server is registered
-6. Ask Codex: Use Wiz to scan this repo and walk me through the top risks
+1. If you are using service-account auth in terminal-launched Codex, make sure WIZ_CLIENT_ID, WIZ_CLIENT_SECRET, and WIZ_DATACENTER are exported before starting Codex
+2. If you are using service-account auth with GUI-launched VS Code on macOS, run zsh ~/.codex/load-wiz-mcp-env.zsh before opening VS Code
+3. Fully quit VS Code
+4. Reopen VS Code
+5. Start a brand new Codex session
+6. Optional: run /wiz-mcp-setup for guided MCP configuration or reconfiguration
+7. Optional: run codex mcp list to verify the Wiz server is registered
+8. Ask Codex: Use Wiz to scan this repo and walk me through the top risks
 EOF
