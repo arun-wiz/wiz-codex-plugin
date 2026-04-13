@@ -3,6 +3,7 @@
 Codex-ready Wiz integration bundle with:
 
 - a home-local Codex plugin that points at the Wiz MCP endpoint
+- a plugin skill to set up or reconfigure Wiz MCP environments
 - a standalone `wiz-security` Codex skill
 - a fallback helper that publishes a Wiz scan and fetches raw findings from the Wiz GraphQL API when MCP is unavailable
 
@@ -61,6 +62,43 @@ The installer will:
 - copy the standalone skill to `~/.codex/skills/wiz-security`
 - create or update `~/.agents/plugins/marketplace.json`
 
+The installed plugin includes a `wiz-mcp-setup` skill for configuring the Wiz MCP endpoint used by Codex.
+
+## Configure Wiz MCP
+
+By default, the plugin MCP config points to:
+
+`https://mcp.app.wiz.io`
+
+The installed MCP config lives at:
+
+`~/plugins/wiz-security/.mcp.json`
+
+You can configure or reconfigure it from Codex with:
+
+```text
+/wiz-mcp-setup
+```
+
+Examples:
+
+```text
+/wiz-mcp-setup test
+/wiz-mcp-setup demo
+/wiz-mcp-setup mcp.test.wiz.io
+/wiz-mcp-setup https://mcp.custom.example.com
+```
+
+The setup skill will:
+
+- resolve environment shorthands like `test` to the corresponding MCP URL
+- inspect existing Wiz MCP entries in `~/plugins/wiz-security/.mcp.json`
+- let you keep the current config, reconfigure it in place, or add another Wiz MCP entry alongside it
+- default to browser-based OAuth
+- support service-account headers only when explicitly requested
+
+If you prefer to edit manually, update `~/plugins/wiz-security/.mcp.json` and then restart Codex.
+
 ## After install
 
 1. Fully quit VS Code.
@@ -83,6 +121,8 @@ Use Wiz to scan this repo and walk me through the top risks
   `plugin/.codex-plugin/plugin.json`
 - Plugin MCP config:
   `plugin/.mcp.json`
+- Plugin MCP setup skill:
+  `plugin/wiz-security/skills/wiz-mcp-setup/SKILL.md`
 - Plugin fallback helper:
   `plugin/scripts/wiz_scan_fetch.sh`
 - Standalone skill:
@@ -93,9 +133,10 @@ Use Wiz to scan this repo and walk me through the top risks
 If a new Codex session still does not expose Wiz MCP:
 
 1. Confirm the plugin exists at `~/plugins/wiz-security`
-2. Confirm the marketplace entry exists in `~/.agents/plugins/marketplace.json`
-3. Confirm `~/.wiz/auth.json` exists for fallback mode
-4. Start a fresh Codex session after fully quitting VS Code
+2. Confirm `~/plugins/wiz-security/.mcp.json` points at the correct Wiz MCP URL
+3. Confirm the marketplace entry exists in `~/.agents/plugins/marketplace.json`
+4. Confirm `~/.wiz/auth.json` exists for fallback mode
+5. Start a fresh Codex session after fully quitting VS Code
 
 If fallback mode fails, verify:
 
@@ -105,6 +146,8 @@ bash ~/.codex/skills/wiz-security/scripts/wiz_scan_fetch.sh --help
 
 ## Example prompts
 
+- `/wiz-mcp-setup`
+- `/wiz-mcp-setup test`
 - `Use Wiz to scan this repo and explain the top findings`
 - `Use Wiz to verify whether my last fix removed the highest severity finding`
 - `Use Wiz to troubleshoot why MCP is not returning detailed findings`

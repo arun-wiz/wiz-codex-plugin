@@ -20,7 +20,18 @@ Configure the remote Wiz MCP server for use with Codex.
     - Example: `test` -> `https://mcp.test.wiz.io`
 - Otherwise use the default: `https://mcp.app.wiz.io`
 
-## Step 2 — Locate the Codex plugin MCP config
+## Step 2 — Derive the MCP entry name from the URL
+
+Use the URL to derive the entry name inside `.mcp.json`:
+
+- `https://mcp.app.wiz.io` -> `wiz-mcp`
+- `https://mcp.<env>.wiz.io` -> `wiz-mcp-<env>`
+  - Example: `https://mcp.test.wiz.io` -> `wiz-mcp-test`
+- Any other URL -> `wiz-mcp-custom`
+
+When reconfiguring an existing entry in place, keep the existing key instead of renaming it unless the user explicitly asks to clean it up.
+
+## Step 3 — Locate the Codex plugin MCP config
 
 The Codex plugin installs its MCP configuration at:
 
@@ -28,20 +39,67 @@ The Codex plugin installs its MCP configuration at:
 
 Codex plugins use a plugin-local `.mcp.json`, not `~/.claude.json` and not `claude mcp add`.
 
-## Step 3 — Update the MCP URL
+If `~/plugins/wiz-security/.mcp.json` does not exist, the plugin is probably not installed yet.
+In that case, tell the user to install the repo first with `./install.sh` and then continue.
 
-Edit `~/plugins/wiz-security/.mcp.json` so the `wiz-mcp` server points at the desired URL:
+## Step 4 — Check for existing Wiz MCP configuration
+
+Read `~/plugins/wiz-security/.mcp.json` and inspect the `mcpServers` object for:
+
+1. URL match: any entry whose `url` exactly matches the target URL
+2. Name match: any entry whose key matches the derived name
+3. Wiz match: any entry whose key starts with `wiz-mcp`
+
+If a match is found, show the user what exists:
+
+```text
+Found existing Wiz MCP configuration:
+  Name: <entry name>
+  URL:  <entry url>
+  Auth: <OAuth | Service Account>
+```
+
+Then ask how they want to proceed:
+
+- Keep existing: make no changes, confirm the current config, and stop
+- Reconfigure: overwrite the matched entry in place with the new settings
+- Create new alongside: add a new entry without touching the existing one
+
+If multiple Wiz entries already exist, prefer an exact URL match first, then an exact name match, then the default `wiz-mcp` entry.
+
+When creating a new entry alongside an existing one:
+
+- Use the derived name from Step 2
+- If that key already exists, append a numeric suffix such as `wiz-mcp-test-2`
+- Never overwrite unrelated non-Wiz MCP servers in the same file
+
+## Step 5 — Choose authentication method
+
+Default to browser-based OAuth without asking unless the user explicitly requested service-account auth.
+
+Only offer service-account auth if the user clearly asked for it or provided service-account credentials.
+
+## Step 6a — OAuth path
+
+For standard browser-based OAuth, write or update the selected entry in `~/plugins/wiz-security/.mcp.json`:
 
 ```json
 {
   "mcpServers": {
-    "wiz-mcp": {
+    "<ENTRY_NAME>": {
       "type": "http",
       "url": "<URL>"
     }
   }
 }
 ```
+
+Rules:
+
+- Merge only the selected entry into `mcpServers`
+- Preserve unrelated MCP servers and unrelated Wiz entries
+- If reconfiguring an existing service-account entry back to OAuth, remove the `headers` block from that entry
+- Do not rewrite the whole file if only one entry needs to change
 
 Default environment:
 
@@ -53,39 +111,28 @@ Common alternates:
 - `https://mcp.test.wiz.io`
 - `https://mcp.<env>.wiz.io`
 
-## Step 4 — Authentication mode
+When Codex first tries to use the server, it should prompt for authorization if the Wiz tenant supports OAuth.
 
-### OAuth path
+## Step 6b — Service account path
 
-For standard browser-based OAuth, the default plugin-local entry is enough:
+Only use this if the user explicitly asked for service-account auth.
 
-```json
-{
-  "mcpServers": {
-    "wiz-mcp": {
-      "type": "http",
-      "url": "<URL>"
-    }
-  }
-}
-```
+Look for credentials in this order:
 
-When Codex first tries to use the server, it should prompt for authorization if your Wiz tenant supports OAuth.
+1. `.env` in the current working directory
+2. If missing there, ask the user for:
+   - `WIZ_CLIENT_ID`
+   - `WIZ_CLIENT_SECRET`
+   - `WIZ_DATACENTER`
 
-### Service account path
+Never print or log the `WIZ_CLIENT_SECRET` value.
 
-Only use this if the user explicitly asks for service-account auth and already has:
-
-- `WIZ_CLIENT_ID`
-- `WIZ_CLIENT_SECRET`
-- `WIZ_DATACENTER`
-
-Then update `~/plugins/wiz-security/.mcp.json` like this:
+Once all three values are available, merge this into the selected entry:
 
 ```json
 {
   "mcpServers": {
-    "wiz-mcp": {
+    "<ENTRY_NAME>": {
       "type": "http",
       "url": "<URL>",
       "headers": {
@@ -98,15 +145,15 @@ Then update `~/plugins/wiz-security/.mcp.json` like this:
 }
 ```
 
-Never print or log the `WIZ_CLIENT_SECRET` value.
+If the entry already exists, update it in place rather than creating duplicate header blocks.
 
-## Step 5 — Restart Codex
+## Step 7 — Restart Codex
 
 After changing the plugin-local `.mcp.json`, restart Codex so it reloads the plugin and MCP configuration.
 
-## Step 6 — Confirm and remind
+## Step 8 — Confirm and remind
 
-Confirm the configured URL and auth mode, then remind the user:
+Confirm the final entry name, URL, and auth mode, then remind the user:
 
 1. Ensure Remote MCP Server is enabled in Wiz:
    `Settings > Tenant > AI Features`
