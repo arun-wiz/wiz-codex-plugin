@@ -85,6 +85,7 @@ existing = config_path.read_text() if config_path.exists() else ""
 service_env = ("WIZ_CLIENT_ID", "WIZ_CLIENT_SECRET", "WIZ_DATACENTER")
 present = [name for name in service_env if os.environ.get(name)]
 use_service_account = len(present) == len(service_env)
+existing_has_service_headers = "env_http_headers" in existing and "Wiz-Client-Id" in existing
 
 if present and not use_service_account:
     missing = ", ".join(name for name in service_env if name not in present)
@@ -99,7 +100,7 @@ block_lines = [
     f'url = "{mcp_url}"',
 ]
 
-if use_service_account:
+if use_service_account or existing_has_service_headers:
     block_lines.append(
         'env_http_headers = { "Wiz-Client-Id" = "WIZ_CLIENT_ID", '
         '"Wiz-Client-Secret" = "WIZ_CLIENT_SECRET", '
