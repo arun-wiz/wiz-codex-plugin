@@ -22,7 +22,7 @@
   "interface": {
     "displayName": "Wiz Security",
     "shortDescription": "Use Wiz MCP first, then fall back to raw scan APIs",
-    "longDescription": "Brings Wiz review and remediation skills into Codex, wires a plugin-local Wiz MCP endpoint, and includes a fallback path that publishes a Wiz scan and fetches raw findings from the Wiz API when MCP is unavailable.",
+    "longDescription": "Brings Wiz review and remediation skills into Codex and includes a fallback path that publishes a Wiz scan and fetches raw findings from the Wiz API when MCP is unavailable. Current Codex installs should configure Wiz MCP in ~/.codex/config.toml.",
     "developerName": "Wiz",
     "category": "Coding",
     "capabilities": [
