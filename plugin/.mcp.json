@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "wiz-mcp": {
+      "type": "http",
+      "url": "https://mcp.app.wiz.io",
+      "note": "Default Wiz Remote MCP endpoint. Codex should prompt for OAuth on first use. If your tenant uses another environment or service-account headers, update this file and restart Codex."
+    }
+  }
+}
